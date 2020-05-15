@@ -172,8 +172,18 @@ func (p *Proxy) proxyToWorkspace(workspaceIdeHost *url.URL, path string, token s
 
 //createDynamicClient create dynamic client with the configured token to be used
 func (p *Proxy) createDynamicClient(token string) (dynamic.Interface, error) {
-	tlsClientConfig := rest.TLSClientConfig{}
-	tlsClientConfig.Insecure = true
+	var tlsClientConfig rest.TLSClientConfig
+	if p.TLSClientConfig.InsecureSkipVerify {
+		//off-cluster mode	. Do you check TLS
+		tlsClientConfig.Insecure = true
+	} else {
+		inCluster, err := rest.InClusterConfig()
+		if err != nil {
+			return nil, err
+		}
+		tlsClientConfig = inCluster.TLSClientConfig
+	}
+
 	config := &rest.Config{
 		Host:            p.ClusterEndpoint.Host,
 		TLSClientConfig: tlsClientConfig,
