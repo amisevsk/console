@@ -45,6 +45,19 @@ var (
 // Handle evaluates the namespace and workspace names from URL and after check that
 // it's created by the current user - proxies the request there
 func (p *Proxy) Handle(user *auth.User, w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case
+		"GET",
+		"HEAD",
+		"OPTIONS",
+		"TRACE":
+		//These methods are considered as not vulnerable for CSRF attack, so the corresponding CSRF token check is skipped.
+		// But in terminal-proxy we must make sure that it's a request made by OpenShift Console
+		// before proxying request with passed token
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
 	ok, namespace, workspaceName, path := stripTerminalAPIPrefix(r.URL.Path)
 	if !ok {
 		http.NotFound(w, r)
