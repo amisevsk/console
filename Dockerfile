@@ -1,13 +1,14 @@
+FROM sleshchenko/openshift-console:cloud-shell-terminal as frontend-app
 FROM quay.io/coreos/tectonic-console-builder:v19 AS build
 
 RUN mkdir -p /go/src/github.com/openshift/console/
 ADD . /go/src/github.com/openshift/console/
 WORKDIR /go/src/github.com/openshift/console/
-RUN ./build.sh
+RUN ./build-backend.sh
 
 FROM openshift/origin-base
 
-COPY --from=build /go/src/github.com/openshift/console/frontend/public/dist /opt/bridge/static
+COPY --from=frontend-app /opt/bridge/static /opt/bridge/static
 COPY --from=build /go/src/github.com/openshift/console/bin/bridge /opt/bridge/bin/bridge
 
 LABEL io.k8s.display-name="OpenShift Console" \
